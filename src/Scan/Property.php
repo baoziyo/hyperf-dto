@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Scan;
+namespace Baoziyoo\Hyperf\DTO\Scan;
 
 class Property
 {
@@ -39,25 +39,16 @@ class Property
 
     public function isSimpleArray(): bool
     {
-        if ($this->isSimpleType && $this->phpSimpleType == 'array') {
-            return true;
-        }
-        return false;
+        return $this->isSimpleType && $this->phpSimpleType === 'array';
     }
 
     public function isSimpleTypeArray(): bool
     {
-        if (! $this->isSimpleType && $this->phpSimpleType == 'array' && $this->arrSimpleType != null) {
-            return true;
-        }
-        return false;
+        return !$this->isSimpleType && $this->phpSimpleType === 'array' && $this->arrSimpleType !== null;
     }
 
     public function isClassArray(): bool
     {
-        if (! $this->isSimpleType && $this->phpSimpleType == 'array' && $this->arrClassName != null) {
-            return true;
-        }
-        return false;
+        return !$this->isSimpleType && $this->phpSimpleType === 'array' && $this->arrClassName !== null;
     }
 }

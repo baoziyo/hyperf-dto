@@ -2,35 +2,34 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Scan;
+namespace Baoziyoo\Hyperf\DTO\Scan;
 
-use Hyperf\ApiDocs\Annotation\ApiModelProperty;
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestBody;
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestFormData;
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestHeader;
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestQuery;
+use Baoziyoo\Hyperf\DTO\Exception\DtoException;
+use Baoziyoo\Hyperf\DTO\JsonMapper;
+use Baoziyoo\Hyperf\DTO\Validation\Annotation\Contracts\Valid;
 use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\Di\ReflectionManager;
-use Hyperf\DTO\Annotation\Contracts\RequestBody;
-use Hyperf\DTO\Annotation\Contracts\RequestFormData;
-use Hyperf\DTO\Annotation\Contracts\RequestHeader;
-use Hyperf\DTO\Annotation\Contracts\RequestQuery;
-use Hyperf\DTO\Annotation\Contracts\Valid;
-use Hyperf\DTO\Annotation\JSONField;
-use Hyperf\DTO\Annotation\Validation\BaseValidation;
-use Hyperf\DTO\ApiAnnotation;
-use Hyperf\DTO\Exception\DtoException;
-use Hyperf\DTO\JsonMapper;
 use Psr\Container\ContainerInterface;
+use ReflectionParameter;
+use ReflectionProperty;
 use Throwable;
 
 class ScanAnnotation extends JsonMapper
 {
     private static array $scanClassArray = [];
 
-    public function __construct(private ContainerInterface $container, private MethodDefinitionCollectorInterface $methodDefinitionCollector)
-    {
+    public function __construct(
+        private readonly ContainerInterface $container,
+        private readonly MethodDefinitionCollectorInterface $methodDefinitionCollector
+    ) {
     }
 
     /**
      * 扫描控制器中的方法.
-     * @throws \ReflectionException
      */
     public function scan(string $className, string $methodName): void
     {
@@ -45,7 +44,7 @@ class ScanAnnotation extends JsonMapper
         }
     }
 
-    public function clearScanClassArray()
+    public function clearScanClassArray(): void
     {
         self::$scanClassArray = [];
     }
@@ -53,21 +52,19 @@ class ScanAnnotation extends JsonMapper
     /**
      * 扫描类.
      */
-    public function scanClass(string $className)
+    public function scanClass(string $className): void
     {
-        if (in_array($className, self::$scanClassArray)) {
+        if (in_array($className, self::$scanClassArray, true)) {
             return;
         }
+
         self::$scanClassArray[] = $className;
         $rc = ReflectionManager::reflectClass($className);
         $strNs = $rc->getNamespaceName();
         foreach ($rc->getProperties() ?? [] as $reflectionProperty) {
             $fieldName = $reflectionProperty->getName();
             $isSimpleType = true;
-            $phpSimpleType = null;
-            $propertyClassName = null;
-            $arrSimpleType = null;
-            $arrClassName = null;
+            $phpSimpleType = $propertyClassName = $arrSimpleType = $arrClassName = null;
             $type = $this->getTypeName($reflectionProperty);
             // php简单类型
             if ($this->isSimpleType($type)) {
@@ -75,10 +72,10 @@ class ScanAnnotation extends JsonMapper
             }
             // 数组类型
             $propertyEnum = PropertyEnum::get($type);
-            if ($type == 'array') {
+            if ($type === 'array') {
                 $docblock = $reflectionProperty->getDocComment();
                 $annotations = $this->parseAnnotationsNew($rc, $reflectionProperty, $docblock);
-                if (! empty($annotations)) {
+                if (!empty($annotations)) {
                     // support "@var type description"
                     [$varType] = explode(' ', $annotations['var'][0]);
                     $varType = $this->getFullNamespace($varType, $strNs);
@@ -114,94 +111,45 @@ class ScanAnnotation extends JsonMapper
             $property->className = $propertyClassName ? trim($propertyClassName, '\\') : null;
             $property->enum = $propertyEnum;
             PropertyManager::setProperty($className, $fieldName, $property);
-            $this->generateValidation($className, $fieldName);
-            $this->propertyAliasMappingManager($className, $fieldName);
+            $this->registerValidation($className, $fieldName);
         }
     }
 
-    /**
-     * 生成验证数据.
-     */
-    protected function propertyAliasMappingManager(string $className, string $fieldName): void
+    protected function registerValidation(string $className, string $fieldName): void
     {
-        $annotationArray = ApiAnnotation::getClassProperty($className, $fieldName);
-
-        foreach ($annotationArray as $annotation) {
-            if ($annotation instanceof JSONField) {
-                if (! empty($annotation->name)) {
-                    PropertyAliasMappingManager::setAliasMapping($className, $annotation->name, $fieldName);
-                }
-            }
-        }
-    }
-
-    /**
-     * 生成验证数据.
-     */
-    protected function generateValidation(string $className, string $fieldName): void
-    {
-        /** @var BaseValidation[] $validation */
-        $validationArr = [];
-        $annotationArray = ApiAnnotation::getClassProperty($className, $fieldName);
-
-        foreach ($annotationArray as $annotation) {
-            if ($annotation instanceof BaseValidation) {
-                $validationArr[] = $annotation;
-            }
-        }
-        $ruleArray = [];
-        foreach ($validationArr as $validation) {
-            if (empty($validation->getRule())) {
-                continue;
-            }
-            $ruleArray[] = $validation->getRule();
-            if (empty($validation->messages)) {
-                continue;
-            }
-            [$messagesRule] = explode(':', $validation->getRule());
-            $key = $fieldName . '.' . $messagesRule;
-            ValidationManager::setMessages($className, $key, $validation->messages);
-        }
-        if (! empty($ruleArray)) {
-            ValidationManager::setRule($className, $fieldName, $ruleArray);
-            foreach ($annotationArray as $annotation) {
-                if (class_exists(ApiModelProperty::class) && $annotation instanceof ApiModelProperty && ! empty($annotation->value)) {
-                    ValidationManager::setAttributes($className, $fieldName, $annotation->value);
-                }
-            }
-        }
     }
 
     /**
      * 获取PHP类型.
      */
-    protected function getTypeName(\ReflectionProperty $rp): string
+    protected function getTypeName(ReflectionProperty $rp): string
     {
         try {
             $type = $rp->getType()->getName();
         } catch (Throwable) {
             $type = 'string';
         }
+
         return $type;
     }
 
     /**
      * 设置方法中的参数.
-     * @throws \ReflectionException
      */
-    private function setMethodParameters($className, $methodName)
+    private function setMethodParameters(string $className, string $methodName): void
     {
         // 获取方法的反射对象
         $ref = ReflectionManager::reflectMethod($className, $methodName);
         // 获取方法上指定名称的全部注解
+        /** @var ReflectionParameter $attributes */
         $attributes = $ref->getParameters();
-        $methodMark = 0;
-        $headerMark = 0;
-        $total = 0;
+        $methodMark = $headerMark = $total = 0;
+
         foreach ($attributes as $attribute) {
             $methodParameters = new MethodParameter();
             $paramName = $attribute->getName();
             $mark = 0;
+
             if ($attribute->getAttributes(RequestQuery::class)) {
                 $methodParameters->setIsRequestQuery(true);
                 ++$mark;
@@ -224,7 +172,7 @@ class ScanAnnotation extends JsonMapper
                 ++$headerMark;
                 ++$total;
             }
-            if ($attribute->getAttributes(Valid::class)) {
+            if (class_exists(Valid::class) && $attribute->getAttributes(Valid::class)) {
                 $methodParameters->setIsValid(true);
             }
             if ($mark > 1) {
@@ -237,6 +185,7 @@ class ScanAnnotation extends JsonMapper
                 MethodParametersManager::setContent($className, $methodName, $paramName, $methodParameters);
             }
         }
+
         if ($methodMark > 1) {
             throw new DtoException("Method annotation [RequestFormData RequestBody] cannot exist simultaneously [{$className}::{$methodName}]");
         }

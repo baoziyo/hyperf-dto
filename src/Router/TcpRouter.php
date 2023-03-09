@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Router;
+namespace Baoziyoo\Hyperf\DTO\Router;
 
 use Hyperf\JsonRpc\TcpServer;
 use Hyperf\Rpc\Protocol;

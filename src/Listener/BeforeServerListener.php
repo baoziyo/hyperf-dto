@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO;
+namespace Baoziyoo\Hyperf\DTO\Listener;
 
+use Baoziyoo\Hyperf\DTO\Event\AfterDtoStart;
+use Baoziyoo\Hyperf\DTO\Router\TcpRouter;
+use Baoziyoo\Hyperf\DTO\Scan\ScanAnnotation;
 use Closure;
 use Hyperf\Contract\ConfigInterface;
-use Hyperf\DTO\Event\AfterDtoStart;
-use Hyperf\DTO\Router\TcpRouter;
-use Hyperf\DTO\Scan\ScanAnnotation;
 use Hyperf\Event\Contract\ListenerInterface;
 use Hyperf\Framework\Event\BeforeServerStart;
 use Hyperf\HttpServer\Router\DispatcherFactory;
@@ -52,7 +52,7 @@ class BeforeServerListener implements ListenerInterface
         }
         $data = $router->getData();
         array_walk_recursive($data, function ($item) use ($scanAnnotation) {
-            if ($item instanceof Handler && ! ($item->callback instanceof Closure)) {
+            if ($item instanceof Handler && !($item->callback instanceof Closure)) {
                 $prepareHandler = $this->prepareHandler($item->callback);
                 if (count($prepareHandler) > 1) {
                     [$controller, $action] = $prepareHandler;
@@ -75,6 +75,7 @@ class BeforeServerListener implements ListenerInterface
         if (is_array($handler) && isset($handler[0], $handler[1])) {
             return $handler;
         }
+
         throw new RuntimeException('Handler not exist.');
     }
 }

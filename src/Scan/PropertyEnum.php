@@ -2,41 +2,40 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Scan;
+namespace Baoziyoo\Hyperf\DTO\Scan;
+
+use BackedEnum;
+use ReflectionEnum;
 
 class PropertyEnum
 {
-    /**
-     * 返回的类型.
-     */
+    /** @var null|string 返回的类型 */
     public ?string $backedType = null;
 
-    /**
-     * 名称.
-     */
+    /** @var null|string 名称 */
     public ?string $className = null;
 
-    /**
-     * 枚举类 value列表.
-     */
+    /** @var null|array<string> 枚举类 value列表. */
     public ?array $valueList = null;
 
     public static function get(string $className): ?PropertyEnum
     {
         /* @phpstan-ignore-next-line */
-        if (PHP_VERSION_ID < 80100 || ! is_subclass_of($className, \BackedEnum::class)) {
+        if (PHP_VERSION_ID < 80100 || !is_subclass_of($className, BackedEnum::class)) {
             return null;
         }
-        $propertyEnum = new PropertyEnum();
+
+        $propertyEnum = new self();
         try {
-            /* @phpstan-ignore-next-line */
-            $rEnum = new \ReflectionEnum($className);
-            $propertyEnum->backedType = (string) $rEnum->getBackingType();
+            $rEnum = new ReflectionEnum($className);
+            $propertyEnum->backedType = (string)$rEnum->getBackingType();
         } catch (\ReflectionException) {
             $propertyEnum->backedType = 'string';
         }
+
         $propertyEnum->className = trim($className, '\\');
         $propertyEnum->valueList = collect($className::cases())->map(fn ($v) => $v->value)->all();
+
         return $propertyEnum;
     }
 }

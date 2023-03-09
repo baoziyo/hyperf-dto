@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Scan;
+namespace Baoziyoo\Hyperf\DTO\Scan;
 
 class PropertyAliasMappingManager
 {
+    /** @var array<string,string> */
     protected static array $content = [];
 
+    /** @var array<string,bool> */
     protected static array $aliasMappingClassname = [];
+
     protected static bool $isAliasMapping = false;
 
     public static function setAliasMapping(string $classname, string $alias, string $propertyName): void
@@ -28,7 +31,7 @@ class PropertyAliasMappingManager
         return isset(static::$aliasMappingClassname[$classname]);
     }
 
-    public static function isAliasMapping()
+    public static function isAliasMapping(): bool
     {
         return static::$isAliasMapping;
     }

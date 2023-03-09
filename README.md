@@ -1,86 +1,93 @@
-## PHP Swagger Api Docs
+# PHP Hyperf DTO
 
-基于 [Hyperf](https://github.com/hyperf/hyperf) 框架的 DTO 类映射
+# 介绍
 
-##### 优点
+> 基于 [tw2066/dto](https://github.com/tw2066/dto) 框架改进而来，特别鸣谢tw2066/dto给的灵感
 
-- 请求参数映射到PHP类
-- 代码可维护性好，扩展性好
-- 支持数组，递归，嵌套
-- 支持框架数据验证器
+# 运行环境
 
-##### 缺点
+* php >= 8.2
+* hyperf >= 3.0
 
-- 模型类需要手工编写
+# 安装
 
-## 注意
-
-> php >= 8.0
-
-## 安装
-
-```
-composer require tangwei/dto
+```shell
+composer require baoziyoo/hyperf-dto
 ```
 
-## 使用
+# 使用
 
-### 1. 使用
-
-## 注解
-
-> 命名空间:`Hyperf\DTO\Annotation\Contracts`
-
-#### RequestBody
-
-- 获取Body参数
+## 创建简单dto
 
 ```php
-public function add(#[RequestBody] DemoBodyRequest $request){}
+<?php
+
+declare(strict_types=1);
+
+namespace Baoziyoo\Hyperf\Example\DTO;
+
+class Address
+{
+    public string $street;
+
+    public float $float;
+    
+    public int $int;
+    
+    /** @var array<int,string> */
+    public array $array;
+    
+    public LoginTokenTypeEnum $loginTokenTypeEnum;
+    
+    public ?City $city = null;
+}
+
+---
+
+class City
+{
+    public string $name;
+}
+
+---
+
+enum LoginTokenTypeEnum: string
+{
+    case jwt = 'jwt';
+    
+    case password = 'password';
+}
 ```
 
-### RequestQuery
-
-- 获取GET参数
-
-```php
-public function add(#[RequestQuery] DemoQuery $request){}
-```
-
-### RequestFormData
-
-- 获取表单请求
-
-```php
-public function fromData(#[RequestFormData] DemoFormData $formData){}
-```
-
-- 获取文件(和表单一起使用)
-
-```php
-#[ApiFormData(name: 'photo', type: 'file')]
-```
-
-- 获取Body参数和GET参数
-
-```php
-public function add(#[RequestBody] DemoBodyRequest $request, #[RequestQuery] DemoQuery $query){}
-```
+## 引用
 
 > 注意: 一个方法，不能同时注入RequestBody和RequestFormData
 
-## 示例
+```php
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestBody;
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestQuery;
+use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestFormData;
 
-### 控制器
+
+// 获取Body参数
+public function add(#[RequestBody] Address $request){}
+
+// 获取GET参数
+public function add(#[RequestQuery] Address $request){}
+
+// 获取表单请求
+public function fromData(#[RequestFormData] Address $formData){}
+
+// 获取Body参数和GET参数
+public function add(#[RequestBody] DemoBodyRequest $request, #[RequestQuery] DemoQuery $query){}
+```
+
+## 例子
 
 ```php
-#[Controller(prefix: '/demo')]
-#[Api(tags: 'demo管理', position: 1)]
 class DemoController extends AbstractController
 {
-    #[ApiOperation(summary: '查询')]
-    #[PostMapping(path: 'index')]
-    public function index(#[RequestQuery] #[Valid] DemoQuery $request): Contact
+    public function index(#[RequestQuery] DemoQuery $request): Contact
     {
         $contact = new Contact();
         $contact->name = $request->name;
@@ -88,14 +95,12 @@ class DemoController extends AbstractController
         return $contact;
     }
 
-    #[PutMapping(path: 'add')]
     public function add(#[RequestBody] DemoBodyRequest $request, #[RequestQuery] DemoQuery $query)
     {
         var_dump($query);
         return json_encode($request, JSON_UNESCAPED_UNICODE);
     }
 
-    #[PostMapping(path: 'fromData')]
     public function fromData(#[RequestFormData] DemoFormData $formData): bool
     {
         $file = $this->request->file('photo');
@@ -103,69 +108,5 @@ class DemoController extends AbstractController
         var_dump($formData);
         return true;
     }
-
-    #[GetMapping(path: 'find/{id}/and/{in}')]
-    public function find(int $id, float $in): array
-    {
-        return ['$id' => $id, '$in' => $in];
-    }
-
-}
-
-```
-
-## 验证器
-
-### 基于框架的验证
-
-> 安装hyperf框架验证器[hyperf/validation](https://github.com/hyperf/validation), 并配置(已安装忽略)
-
-- 注解
-  `Required` `Between` `Date` `Email` `Image` `Integer` `Nullable` `Numeric`  `Url` `Validation`
-- 校验生效
-
-> 只需在控制器方法中加上 #[Valid] 注解
-
-```php
-public function index(#[RequestQuery] #[Valid] DemoQuery $request){}
-```
-
-```php
-class DemoQuery
-{
-    public string $name;
-
-    #[Required]
-    #[Integer]
-    #[Between(1,5)]
-    public int $num;
 }
 ```
-
-- Validation
-
-> rule 支持框架所有验证
-- 自定义验证注解
-> 只需继承`Hyperf\DTO\Annotation\Validation\BaseValidation`即可
-```php
-#[Attribute(Attribute::TARGET_PROPERTY)]
-class Image extends BaseValidation
-{
-    protected $rule = 'image';
-}
-```
-
-## 注意
-
-```php
-    /**
-     * 需要绝对路径.
-     * @var \App\DTO\Address[]
-     */
-    #[ApiModelProperty('地址')]
-    public array $addressArr;
-```
-
-- 映射数组类时,`@var`需要写绝对路径
-- 控制器中使用了框架`AutoController`注解,只收集了`POST`方法
-

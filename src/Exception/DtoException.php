@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Exception;
+namespace Baoziyoo\Hyperf\DTO\Exception;
 
 use Hyperf\Server\Exception\RuntimeException;
 

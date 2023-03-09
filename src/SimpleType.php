@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO;
+namespace Baoziyoo\Hyperf\DTO;
 
 class SimpleType
 {

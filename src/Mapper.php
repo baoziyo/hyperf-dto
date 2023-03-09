@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO;
+namespace Baoziyoo\Hyperf\DTO;
 
 use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\Utils\ApplicationContext;
@@ -10,6 +10,7 @@ use Hyperf\Utils\Contracts\Arrayable;
 
 class Mapper
 {
+    /** @var array<string,JsonMapper> */
     protected static array $jsonMapper = [];
 
     public static function map($json, object $object)
@@ -46,12 +47,13 @@ class Mapper
 
     public static function getJsonMapper($key = 'default'): JsonMapper
     {
-        if (! isset(static::$jsonMapper[$key])) {
+        if (!isset(static::$jsonMapper[$key])) {
             $jsonMapper = new JsonMapper();
             $logger = ApplicationContext::getContainer()->get(StdoutLoggerInterface::class);
             $jsonMapper->setLogger($logger);
             // 将数组传递给映射
             $jsonMapper->bEnforceMapType = false;
+            $jsonMapper->bStrictNullTypes = false;
             static::$jsonMapper[$key] = $jsonMapper;
         }
         return static::$jsonMapper[$key];

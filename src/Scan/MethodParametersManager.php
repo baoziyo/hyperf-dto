@@ -2,27 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Scan;
+namespace Baoziyoo\Hyperf\DTO\Scan;
 
 class MethodParametersManager
 {
+    /** @var array<string,MethodParameter> */
     public static array $content = [];
 
     public static function setContent(string $className, string $methodName, string $paramName, MethodParameter $method): void
     {
         $className = trim($className, '\\');
-        if (isset(static::$content[$className . $methodName . $paramName])) {
-            return;
+        $key = $className . $methodName . $paramName;
+
+        if (!isset(static::$content[$key])) {
+            static::$content[$key] = $method;
         }
-        static::$content[$className . $methodName . $paramName] = $method;
     }
 
-    public static function getMethodParameter(string $className, string $methodName, string $paramName): ?MethodParameter
+    public static function getMethodParameter(string $className, string $methodName, string $paramName): null|MethodParameter
     {
         $className = trim($className, '\\');
-        if (! isset(static::$content[$className . $methodName . $paramName])) {
-            return null;
-        }
-        return static::$content[$className . $methodName . $paramName];
+        $key = $className . $methodName . $paramName;
+
+        return static::$content[$key] ?? null;
     }
 }

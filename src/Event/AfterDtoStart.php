@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Event;
+namespace Baoziyoo\Hyperf\DTO\Event;
 
 use Hyperf\HttpServer\Router\RouteCollector;
 use Hyperf\RpcServer\Router\RouteCollector as RpcRouteCollector;

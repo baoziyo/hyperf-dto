@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Scan;
+namespace Baoziyoo\Hyperf\DTO\Scan;
 
 class PropertyManager
 {
+    /** @var array<string,Property> */
     protected static array $content = [];
 
+    /** @var array<string,bool> */
     protected static array $notSimpleClass = [];
 
     public static function getAll(): array
@@ -18,6 +20,7 @@ class PropertyManager
     public static function setNotSimpleClass($className): void
     {
         $className = trim($className, '\\');
+
         static::$notSimpleClass[$className] = true;
     }
 
@@ -27,45 +30,22 @@ class PropertyManager
     public static function setProperty(string $className, string $fieldName, Property $property): void
     {
         $className = trim($className, '\\');
-        if (isset(static::$content[$className][$fieldName])) {
-            return;
+        if (!isset(static::$content[$className][$fieldName])) {
+            static::$content[$className][$fieldName] = $property;
         }
-        static::$content[$className][$fieldName] = $property;
     }
 
     /**
      * 获取类中字段的属性.
      * @param $className
      * @param $fieldName
-     * @return Property|null
+     * @return null|Property
      */
     public static function getProperty($className, $fieldName): ?Property
     {
         $className = trim($className, '\\');
-        if (! isset(static::$content[$className][$fieldName])) {
-            return null;
-        }
-        return static::$content[$className][$fieldName];
-    }
 
-    public static function getPropertyByType($className, $type, bool $isSimpleType): array
-    {
-        $className = trim($className, '\\');
-        if (! isset(static::$content[$className])) {
-            return [];
-        }
-        $data = [];
-        foreach (static::$content[$className] as $fieldName => $propertyArr) {
-            /** @var Property $property */
-            foreach ($propertyArr as $property) {
-                if ($property->phpSimpleType == $type
-                    && $property->isSimpleType == $isSimpleType
-                ) {
-                    $data[$fieldName] = $property;
-                }
-            }
-        }
-        return $data;
+        return static::$content[$className][$fieldName] ?? null;
     }
 
     /**
@@ -75,12 +55,12 @@ class PropertyManager
     public static function getPropertyAndNotSimpleType($className): array
     {
         $className = trim($className, '\\');
-        if (! isset(static::$notSimpleClass[$className])) {
+        if (!isset(static::$notSimpleClass[$className])) {
             return [];
         }
         $data = [];
         foreach (static::$content[$className] ?? [] as $fieldName => $property) {
-            if (! $property->isSimpleType) {
+            if (!$property->isSimpleType) {
                 $data[$fieldName] = $property;
             }
         }

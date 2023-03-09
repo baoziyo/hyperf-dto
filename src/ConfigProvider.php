@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO;
+namespace Baoziyoo\Hyperf\DTO;
 
-use Hyperf\HttpServer\CoreMiddleware;
+use Baoziyoo\Hyperf\DTO\Aspect\CoreMiddlewareAspect;
+use Baoziyoo\Hyperf\DTO\Listener\BeforeServerListener;
 
 class ConfigProvider
 {
@@ -12,10 +13,12 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
-                CoreMiddleware::class => Middleware\CoreMiddleware::class,
             ],
             'listeners' => [
                 BeforeServerListener::class,
+            ],
+            'aspects' => [
+                CoreMiddlewareAspect::class,
             ],
             'annotations' => [
                 'scan' => [

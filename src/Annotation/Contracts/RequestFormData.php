@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hyperf\DTO\Annotation\Contracts;
+namespace Baoziyoo\Hyperf\DTO\Annotation\Contracts;
 
 use Attribute;
 use Hyperf\Di\Annotation\AbstractAnnotation;
