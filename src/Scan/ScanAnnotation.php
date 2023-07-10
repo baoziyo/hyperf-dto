@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Baoziyoo\Hyperf\DTO\Scan;
 
+use Baoziyoo\Hyperf\ApiDocs\Annotation\ApiResponse;
 use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestBody;
 use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestFormData;
 use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestHeader;
@@ -18,21 +19,25 @@ use Baoziyoo\Hyperf\DTO\Annotation\Contracts\RequestQuery;
 use Baoziyoo\Hyperf\DTO\Exception\DtoException;
 use Baoziyoo\Hyperf\DTO\JsonMapper;
 use Baoziyoo\Hyperf\DTO\Validation\Annotation\Contracts\Valid;
+use Hyperf\Di\Annotation\AnnotationReader;
 use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\Di\ReflectionManager;
+use Hyperf\Di\ReflectionType;
 use Psr\Container\ContainerInterface;
 use ReflectionParameter;
 use ReflectionProperty;
 use Throwable;
+use ReflectionClass;
 
 class ScanAnnotation extends JsonMapper
 {
     private static array $scanClassArray = [];
 
     public function __construct(
-        private readonly ContainerInterface $container,
+        private readonly ContainerInterface                 $container,
         private readonly MethodDefinitionCollectorInterface $methodDefinitionCollector
-    ) {
+    )
+    {
     }
 
     /**
@@ -42,7 +47,12 @@ class ScanAnnotation extends JsonMapper
     {
         $this->setMethodParameters($className, $methodName);
         $definitionArr = $this->methodDefinitionCollector->getParameters($className, $methodName);
-        $definitionArr[] = $this->methodDefinitionCollector->getReturnType($className, $methodName);
+        $class = new ReflectionClass($className);
+        $action = $class->getMethod($methodName);
+        $methodAnnotation = (new AnnotationReader())->getMethodAnnotation($action, ApiResponse::class);
+        if (isset($methodAnnotation->type)) {
+            $definitionArr[] = new ReflectionType($methodAnnotation->type);
+        }
         foreach ($definitionArr as $definition) {
             $parameterClassName = $definition->getName();
             if ($this->container->has($parameterClassName)) {

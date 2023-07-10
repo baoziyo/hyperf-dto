@@ -13,6 +13,8 @@ namespace Baoziyoo\Hyperf\DTO;
 
 use Baoziyoo\Hyperf\DTO\Aspect\CoreMiddlewareAspect;
 use Baoziyoo\Hyperf\DTO\Listener\BeforeServerListener;
+use Baoziyoo\Hyperf\DTO\Middleware\ResponseMiddleware;
+use Hyperf\HttpServer\CoreMiddleware;
 
 class ConfigProvider
 {
@@ -25,7 +27,11 @@ class ConfigProvider
                 BeforeServerListener::class,
             ],
             'aspects' => [
-                CoreMiddlewareAspect::class,
+            ],
+            'middlewares' => [
+                'http' => [
+                    ResponseMiddleware::class,
+                ],
             ],
             'annotations' => [
                 'scan' => [
