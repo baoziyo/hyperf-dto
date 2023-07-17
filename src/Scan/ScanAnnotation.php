@@ -69,7 +69,7 @@ class ScanAnnotation extends JsonMapper
     /**
      * 扫描类.
      */
-    public function scanClass(string $className): void
+    public function scanClass(string $className, ?string $parentClassName = null, ?string $parentFieldName = null): void
     {
         if (in_array($className, self::$scanClassArray, true)) {
             return;
@@ -106,7 +106,7 @@ class ScanAnnotation extends JsonMapper
                         } elseif (class_exists($arrType)) {
                             $arrClassName = $arrType;
                             PropertyManager::setNotSimpleClass($className);
-                            $this->scanClass($arrType);
+                            $this->scanClass($arrType, $className, $fieldName);
                         }
                     }
                 }
@@ -114,21 +114,39 @@ class ScanAnnotation extends JsonMapper
                 $isSimpleType = false;
                 PropertyManager::setNotSimpleClass($className);
             } elseif (class_exists($type)) {
-                $this->scanClass($type);
+                $this->scanClass($type, $className, $fieldName);
                 $isSimpleType = false;
                 $propertyClassName = $type;
                 PropertyManager::setNotSimpleClass($className);
             }
 
-            $property = new Property();
+            $property = PropertyManager::getProperty($className, $fieldName);
+            if ($property === null) {
+                $property = new Property();
+            }
             $property->phpSimpleType = $phpSimpleType;
             $property->isSimpleType = $isSimpleType;
             $property->arrSimpleType = $arrSimpleType;
             $property->arrClassName = $arrClassName ? trim($arrClassName, '\\') : null;
             $property->className = $propertyClassName ? trim($propertyClassName, '\\') : null;
             $property->enum = $propertyEnum;
+            $property->parentClassName = $parentClassName ? trim($parentClassName, '\\') : null;
+            $property->parentFieldName = $parentFieldName ?? null;
+            $property->currentClassName = $className ? trim($className, '\\') : null;;
             PropertyManager::setProperty($className, $fieldName, $property);
-            $this->registerValidation($className, $fieldName);
+
+            if ($parentClassName && $parentFieldName) {
+                $parentProperty = PropertyManager::getProperty($parentClassName, $parentFieldName);
+                if ($parentProperty === null) {
+                    $parentProperty = new Property();
+                }
+                $parentProperty->children[$fieldName] = $property;
+                PropertyManager::setProperty($parentClassName, $parentFieldName, $parentProperty);
+            }
+
+            if (!$parentClassName && !$parentFieldName) {
+                $this->registerValidation($className, $fieldName);
+            }
         }
     }
 

@@ -44,6 +44,14 @@ class Property
      */
     public ?PropertyEnum $enum = null;
 
+    public ?string $parentClassName = null;
+
+    public ?string $parentFieldName = null;
+
+    public ?string $currentClassName = null;
+
+    public array $children = [];
+
     public function isSimpleArray(): bool
     {
         return $this->isSimpleType && $this->phpSimpleType === 'array';
