@@ -37,15 +37,15 @@ abstract class ApiResponseFilter
     public function filter(string $json): string
     {
         $data = Json::decode($json);
-        $dataObj = Mapper::mapDto($data['data'], $this);
-        $dataObj = Json::encode($dataObj);
-        $dataObj = Json::decode($dataObj);
 
         if ($this->mode === self::SIMPLE_MODE) {
+            $dataObj = Mapper::mapDto($data['data'], $this);
+            $dataObj = Json::encode($dataObj);
+            $dataObj = Json::decode($dataObj);
             $data['data'] = $this->simple($dataObj);
         }
         if ($this->mode === self::COMPLEX_MODE) {
-            $data['data'] = $this->complex($dataObj);
+            $data['data'] = $this->complex($data['data']);
         }
 
         $data = $this->handleArrayToString($data);
@@ -90,25 +90,32 @@ abstract class ApiResponseFilter
         return $data;
     }
 
-    private function complex(array $data): array
+    private function complex(mixed $data): array
     {
         $property = $this->mode . 'Fields';
-        if (property_exists($this, $this->fieldsName) && $this->{$this->fieldsName}) {
-            if (isset($data['list'])) {
-                foreach ($data['list'] as &$item) {
+        if (isset($data['list'])) {
+            foreach ($data['list'] as &$item) {
+                $dataObj = Mapper::mapDto($item, $this);
+                $item = Json::decode(Json::encode($dataObj));
+                if (property_exists($this, $this->fieldsName) && $this->{$this->fieldsName}) {
                     $item = $this->parts($item, $this->{$this->fieldsName});
                 }
-                unset($item);
-
-                $this->{$this->fieldsName} = array_merge($this->{$this->fieldsName}, ['count', 'list']);
-
-                $data = $this->simple($data);
-            } else {
-                foreach ($data as &$item) {
-                    $item = $this->parts($item, $this->{$this->fieldsName});
-                }
-                unset($item);
             }
+            unset($item);
+
+            if (property_exists($this, $this->fieldsName) && $this->{$this->fieldsName}) {
+                $this->{$this->fieldsName} = array_merge($this->{$this->fieldsName}, ['count', 'list']);
+                $data = $this->simple($data);
+            }
+        } else {
+            foreach ($data as &$item) {
+                $dataObj = Mapper::mapDto($item, $this);
+                $item = Json::decode(Json::encode($dataObj));
+                if (property_exists($this, $this->fieldsName) && $this->{$this->fieldsName}) {
+                    $item = $this->parts($item, $this->{$this->fieldsName});
+                }
+            }
+            unset($item);
         }
 
         if (method_exists($this, $property)) {
