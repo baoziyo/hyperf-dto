@@ -97,7 +97,7 @@ class ResponseMiddleware implements MiddlewareInterface
         return $response->withAddedHeader('Content-Type', 'application/json');
     }
 
-    private function getClassAndMethod(ServerRequestInterface $request): array
+    private function getClassAndMethod(ServerRequestInterface $request): array|null
     {
         $name = $request->getAttribute(Dispatched::class)->handler->callback;
         if (!is_string($name)) {
