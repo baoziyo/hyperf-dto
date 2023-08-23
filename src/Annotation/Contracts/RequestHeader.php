@@ -17,4 +17,8 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 #[Attribute(Attribute::TARGET_PARAMETER)]
 class RequestHeader extends AbstractAnnotation
 {
+    public function __construct()
+    {
+
+    }
 }
