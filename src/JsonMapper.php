@@ -87,7 +87,7 @@ class JsonMapper extends \JsonMapper
                     );
                 } else {
                     $this->log(
-                        'info',
+                        'debug',
                         'Property {property} does not exist in {class}',
                         ['property' => $key, 'class' => $strClassName]
                     );
@@ -103,7 +103,7 @@ class JsonMapper extends \JsonMapper
                     );
                 }
                 $this->log(
-                    'info',
+                    'debug',
                     'Property {property} has no public setter method in {class}',
                     ['property' => $key, 'class' => $strClassName]
                 );
