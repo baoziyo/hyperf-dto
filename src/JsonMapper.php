@@ -19,6 +19,7 @@ use JsonMapper_Exception;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Types\ContextFactory;
+use Psr\Http\Message\UploadedFileInterface;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
@@ -27,6 +28,25 @@ use ReflectionUnionType;
 
 class JsonMapper extends \JsonMapper
 {
+    /**
+     * Checks if the given type is a "simple type"
+     *
+     * @param string $type type name from gettype()
+     *
+     * @return boolean True if it is a simple PHP type
+     *
+     * @see isFlatType()
+     */
+    protected function isSimpleType($type)
+    {
+        return $type == 'string'
+            || $type == 'boolean' || $type == 'bool'
+            || $type == 'integer' || $type == 'int'
+            || $type == 'double' || $type == 'float'
+            || $type == 'array' || $type == 'object'
+            || $type == UploadedFileInterface::class;
+    }
+
     /**
      * Map data all data in $json into the given $object instance.
      *
