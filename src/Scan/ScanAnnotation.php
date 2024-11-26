@@ -124,6 +124,7 @@ class ScanAnnotation extends JsonMapper
             if ($property === null) {
                 $property = new Property();
             }
+            $property->phpType = $type;
             $property->phpSimpleType = $phpSimpleType;
             $property->isSimpleType = $isSimpleType;
             $property->arrSimpleType = $arrSimpleType;

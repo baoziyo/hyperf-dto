@@ -25,6 +25,11 @@ class Property
     public ?string $phpSimpleType = null;
 
     /**
+     * PHP源类型.
+     */
+    public ?string $phpType = null;
+
+    /**
      * 普通类名称.
      */
     public ?string $className = null;
